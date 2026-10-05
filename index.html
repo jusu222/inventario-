@@ -1,0 +1,1293 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sistema de Inventario y Punto de Venta</title>
+  <style>
+    /* CSS RESET & VARIABLES */
+    :root {
+      --primary: #2563eb;
+      --primary-dark: #1d4ed8;
+      --primary-light: #eff6ff;
+      --success: #10b981;
+      --success-dark: #059669;
+      --danger: #ef4444;
+      --danger-dark: #dc2626;
+      --warning: #f59e0b;
+      --bg-main: #f8fafc;
+      --bg-card: #ffffff;
+      --text-main: #0f172a;
+      --text-muted: #64748b;
+      --border-color: #e2e8f0;
+      --radius-sm: 6px;
+      --radius-md: 10px;
+      --radius-lg: 16px;
+      --shadow-sm: 0 1px 3px rgba(0,0,0,0.05);
+      --shadow-md: 0 4px 12px rgba(0,0,0,0.08);
+      --shadow-lg: 0 10px 25px rgba(0,0,0,0.12);
+      --transition: all 0.25s ease-in-out;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', Roboto, -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+
+    body {
+      background-color: var(--bg-main);
+      color: var(--text-main);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* UTILITY CLASSES */
+    .hidden {
+      display: none !important;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .badge-admin {
+      background-color: #dbeafe;
+      color: #1e40af;
+    }
+
+    .badge-vendedor {
+      background-color: #fef3c7;
+      color: #92400e;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 10px 18px;
+      border-radius: var(--radius-md);
+      font-size: 0.9rem;
+      font-weight: 600;
+      border: none;
+      cursor: pointer;
+      transition: var(--transition);
+      text-decoration: none;
+    }
+
+    .btn-primary { background: var(--primary); color: white; }
+    .btn-primary:hover { background: var(--primary-dark); }
+
+    .btn-success { background: var(--success); color: white; }
+    .btn-success:hover { background: var(--success-dark); }
+
+    .btn-danger { background: var(--danger); color: white; }
+    .btn-danger:hover { background: var(--danger-dark); }
+
+    .btn-secondary { background: #e2e8f0; color: var(--text-main); }
+    .btn-secondary:hover { background: #cbd5e1; }
+
+    /* LOGIN SCREEN */
+    #login-screen {
+      position: fixed;
+      inset: 0;
+      background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+      padding: 20px;
+    }
+
+    .login-card {
+      background: var(--bg-card);
+      width: 100%;
+      max-width: 420px;
+      padding: 35px 30px;
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-lg);
+    }
+
+    .login-header {
+      text-align: center;
+      margin-bottom: 25px;
+    }
+
+    .login-header h2 {
+      font-size: 1.6rem;
+      color: var(--text-main);
+      margin-bottom: 8px;
+    }
+
+    .login-header p {
+      color: var(--text-muted);
+      font-size: 0.9rem;
+    }
+
+    .form-group {
+      margin-bottom: 18px;
+    }
+
+    .form-group label {
+      display: block;
+      margin-bottom: 6px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--text-main);
+    }
+
+    .form-control {
+      width: 100%;
+      padding: 11px 14px;
+      border: 1.5px solid var(--border-color);
+      border-radius: var(--radius-md);
+      font-size: 0.95rem;
+      transition: var(--transition);
+      outline: none;
+    }
+
+    .form-control:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+    }
+
+    /* HEADER & NAVBAR */
+    header {
+      background: var(--bg-card);
+      border-bottom: 1px solid var(--border-color);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .header-container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 12px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .brand-logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: var(--primary);
+    }
+
+    .user-panel {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+
+    .user-info {
+      text-align: right;
+    }
+
+    .user-name {
+      font-weight: 600;
+      font-size: 0.95rem;
+    }
+
+    /* NAVIGATION TABS */
+    nav {
+      background: var(--bg-card);
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .nav-container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 20px;
+      display: flex;
+      gap: 10px;
+    }
+
+    .nav-tab {
+      padding: 14px 20px;
+      background: transparent;
+      border: none;
+      border-bottom: 3px solid transparent;
+      font-weight: 600;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: var(--transition);
+    }
+
+    .nav-tab:hover {
+      color: var(--primary);
+    }
+
+    .nav-tab.active {
+      color: var(--primary);
+      border-bottom-color: var(--primary);
+    }
+
+    /* MAIN CONTAINER */
+    main {
+      max-width: 1200px;
+      width: 100%;
+      margin: 25px auto;
+      padding: 0 20px;
+      flex-grow: 1;
+    }
+
+    /* INVENTORY SECTION */
+    .inventory-layout {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 25px;
+    }
+
+    .inventory-layout.has-sidebar {
+      grid-template-columns: 320px 1fr;
+    }
+
+    @media (max-width: 900px) {
+      .inventory-layout.has-sidebar {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .card {
+      background: var(--bg-card);
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--border-color);
+      box-shadow: var(--shadow-sm);
+      padding: 20px;
+    }
+
+    .card-title {
+      font-size: 1.1rem;
+      font-weight: 700;
+      margin-bottom: 18px;
+      color: var(--text-main);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    /* PRODUCT FORM */
+    .img-preview-box {
+      width: 100%;
+      height: 160px;
+      border: 2px dashed var(--border-color);
+      border-radius: var(--radius-md);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--bg-main);
+      margin-top: 8px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .img-preview-box img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    /* SEARCH BAR */
+    .search-box {
+      margin-bottom: 20px;
+      position: relative;
+    }
+
+    /* PRODUCT GRID & CARDS */
+    .products-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+      gap: 20px;
+    }
+
+    .product-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      transition: var(--transition);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .product-card:hover {
+      transform: translateY(-3px);
+      box-shadow: var(--shadow-md);
+    }
+
+    .product-img-container {
+      width: 100%;
+      height: 180px;
+      background: #f1f5f9;
+      position: relative;
+    }
+
+    .product-img-container img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .product-info {
+      padding: 15px;
+      display: flex;
+      flex-direction: column;
+      flex-grow: 1;
+    }
+
+    .product-name {
+      font-weight: 600;
+      font-size: 1rem;
+      margin-bottom: 6px;
+      color: var(--text-main);
+      word-break: break-word;
+    }
+
+    .product-price {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: var(--success-dark);
+      margin-bottom: 15px;
+    }
+
+    .product-actions {
+      margin-top: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .product-actions-admin {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    /* SALES HISTORY MODULE */
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 15px;
+      margin-bottom: 25px;
+    }
+
+    .metric-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 18px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .metric-label {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      margin-bottom: 5px;
+    }
+
+    .metric-value {
+      font-size: 1.7rem;
+      font-weight: 800;
+      color: var(--text-main);
+    }
+
+    .filters-bar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-bottom: 20px;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .filters-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      align-items: center;
+    }
+
+    /* TABLES */
+    .table-container {
+      width: 100%;
+      overflow-x: auto;
+      background: var(--bg-card);
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border-color);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+      font-size: 0.9rem;
+    }
+
+    th, td {
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    th {
+      background: #f8fafc;
+      font-weight: 600;
+      color: var(--text-muted);
+    }
+
+    tr:last-child td {
+      border-bottom: none;
+    }
+
+    .table-thumb {
+      width: 44px;
+      height: 44px;
+      border-radius: var(--radius-sm);
+      object-fit: cover;
+    }
+
+    /* USERS MODULE */
+    .users-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+      gap: 20px;
+    }
+
+    .user-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 18px;
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+
+    .user-avatar {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      background: var(--primary-light);
+      color: var(--primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 1.2rem;
+    }
+
+    /* MODAL SYSTEM */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.5);
+      backdrop-filter: blur(4px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 900;
+      padding: 20px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s ease;
+    }
+
+    .modal-overlay.active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .modal-content {
+      background: var(--bg-card);
+      border-radius: var(--radius-lg);
+      max-width: 450px;
+      width: 100%;
+      padding: 25px;
+      box-shadow: var(--shadow-lg);
+    }
+
+    .modal-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      margin-top: 20px;
+    }
+
+    .alert {
+      padding: 12px 16px;
+      border-radius: var(--radius-md);
+      font-size: 0.88rem;
+      margin-bottom: 15px;
+    }
+
+    .alert-danger {
+      background: #fef2f2;
+      color: #991b1b;
+      border: 1px solid #fecaca;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 40px 20px;
+      color: var(--text-muted);
+      grid-column: 1 / -1;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- LOGIN MODULE -->
+  <div id="login-screen">
+    <div class="login-card">
+      <div class="login-header">
+        <h2>Acceso al Sistema</h2>
+        <p>Introduce tus credenciales para continuar</p>
+      </div>
+      <div id="login-alert" class="alert alert-danger hidden"></div>
+      <form id="login-form">
+        <div class="form-group">
+          <label for="input-user">Usuario</label>
+          <input type="text" id="input-user" class="form-control" required placeholder="Ej. admin">
+        </div>
+        <div class="form-group">
+          <label for="input-pass">Contraseña</label>
+          <input type="password" id="input-pass" class="form-control" required placeholder="••••••••">
+        </div>
+        <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 10px;">
+          Iniciar Sesión
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- MAIN APP WRAPPER -->
+  <div id="app-wrapper" class="hidden">
+    <header>
+      <div class="header-container">
+        <div class="brand-logo">
+          📦 POS Inventario
+        </div>
+        <div class="user-panel">
+          <div class="user-info">
+            <div class="user-name" id="display-user-name">-</div>
+            <span class="badge" id="display-user-role">-</span>
+          </div>
+          <button id="btn-logout" class="btn btn-secondary">Cerrar Sesión</button>
+        </div>
+      </div>
+    </header>
+
+    <nav>
+      <div class="nav-container" id="nav-tabs-container">
+        <!-- Dynamic Nav Tabs loaded via JS -->
+      </div>
+    </nav>
+
+    <main>
+      <!-- TAB 1: INVENTORY -->
+      <section id="tab-inventory" class="tab-content">
+        <div id="inventory-layout-container" class="inventory-layout">
+          
+          <!-- ADMIN FORM CONTAINER (DYNAMICALLY INSERTED ONLY FOR ADMIN) -->
+          <div id="admin-form-wrapper"></div>
+
+          <!-- PRODUCTS LIST SECTION -->
+          <div class="inventory-main">
+            <div class="search-box">
+              <input type="text" id="search-input" class="form-control" placeholder="🔍 Buscar producto por nombre...">
+            </div>
+
+            <div id="products-grid" class="products-grid">
+              <!-- Rendered via JS -->
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- TAB 2: SALES HISTORY (ONLY RENDERED/VISIBLE FOR ADMIN) -->
+      <section id="tab-history" class="tab-content hidden">
+        <div class="metrics-grid">
+          <div class="metric-card">
+            <span class="metric-label">Ingresos Totales</span>
+            <span class="metric-value" id="metric-total-income">$0.00</span>
+          </div>
+          <div class="metric-card">
+            <span class="metric-label">Productos Vendidos</span>
+            <span class="metric-value" id="metric-total-items">0</span>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="filters-bar">
+            <div class="filters-group">
+              <div>
+                <label style="font-size:0.8rem; font-weight:600; display:block; margin-bottom:4px;">Filtrar Vendedor:</label>
+                <select id="filter-user" class="form-control" style="min-width:150px;">
+                  <option value="">Todos los vendedores</option>
+                </select>
+              </div>
+              <div>
+                <label style="font-size:0.8rem; font-weight:600; display:block; margin-bottom:4px;">Filtrar Fecha:</label>
+                <input type="date" id="filter-date" class="form-control">
+              </div>
+              <button id="btn-clear-filters" class="btn btn-secondary" style="margin-top:auto;">Limpiar Filtros</button>
+            </div>
+            <button id="btn-empty-history" class="btn btn-danger" style="margin-top:auto;">Vaciar Historial</button>
+          </div>
+
+          <div class="table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th>Foto</th>
+                  <th>Producto</th>
+                  <th>Precio</th>
+                  <th>Fecha y Hora</th>
+                  <th>Vendedor</th>
+                </tr>
+              </thead>
+              <tbody id="history-table-body">
+                <!-- Rendered via JS -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 3: USERS LIST (ADMIN ONLY) -->
+      <section id="tab-users" class="tab-content hidden">
+        <div class="card">
+          <div class="card-title">Usuarios Registrados en el Sistema</div>
+          <div id="users-grid" class="users-grid">
+            <!-- Rendered via JS -->
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- CUSTOM MODAL CONFIRMATION -->
+  <div id="confirm-modal" class="modal-overlay">
+    <div class="modal-content">
+      <h3 id="modal-title" style="margin-bottom: 10px;">Confirmación</h3>
+      <p id="modal-message" style="color: var(--text-muted); font-size: 0.95rem;"></p>
+      <div class="modal-actions">
+        <button id="modal-btn-cancel" class="btn btn-secondary">Cancelar</button>
+        <button id="modal-btn-confirm" class="btn btn-danger">Confirmar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- JAVASCRIPT LOGIC -->
+  <script>
+    /**
+     * =========================================================================
+     * CONFIGURACIÓN DE USUARIOS PREDEFINIDOS
+     * NOTA: Puedes agregar, modificar o remover usuarios y sus roles aquí.
+     * =========================================================================
+     */
+    const USUARIOS = [
+      { usuario: "admin", password: "admin123", rol: "admin" },
+      { usuario: "vendedor1", password: "venta123", rol: "vendedor" },
+      { usuario: "vendedor2", password: "venta456", rol: "vendedor" }
+    ];
+
+    // DATOS DE PRUEBA INICIALES (si localStorage está vacío)
+    const INVENTARIO_SEMILLA = [
+      {
+        id: "prod-1",
+        nombre: "Sartén Antiadherente 24cm",
+        precio: 24.99,
+        imagen: "https://images.unsplash.com/photo-1584992236310-6edddc08acff?w=400&auto=format&fit=crop&q=80"
+      },
+      {
+        id: "prod-2",
+        nombre: "Cafetera de Goteo 12 Tazas",
+        precio: 49.50,
+        imagen: "https://images.unsplash.com/photo-1517668808822-9eaa03afd2af?w=400&auto=format&fit=crop&q=80"
+      },
+      {
+        id: "prod-3",
+        nombre: "Juego de Cuchillos de Cocina (6 Pzs)",
+        precio: 35.00,
+        imagen: "https://images.unsplash.com/photo-1593618998160-e34014e67546?w=400&auto=format&fit=crop&q=80"
+      }
+    ];
+
+    // ESTADO GLOBAL DE LA APLICACIÓN
+    let currentUser = null;
+    let editingProductId = null;
+    let currentBase64Image = "";
+
+    // CLAVES LOCALSTORAGE
+    const STORAGE_INVENTORY_KEY = "pos_inventario_data";
+    const STORAGE_HISTORY_KEY = "pos_historial_ventas";
+    const SESSION_USER_KEY = "pos_active_session";
+
+    // INICIALIZACIÓN
+    window.addEventListener("DOMContentLoaded", () => {
+      initStorage();
+      checkSession();
+      setupEventListeners();
+    });
+
+    // Inicializar almacenamiento si está vacío
+    function initStorage() {
+      if (!localStorage.getItem(STORAGE_INVENTORY_KEY)) {
+        localStorage.setItem(STORAGE_INVENTORY_KEY, JSON.stringify(INVENTARIO_SEMILLA));
+      }
+      if (!localStorage.getItem(STORAGE_HISTORY_KEY)) {
+        localStorage.setItem(STORAGE_HISTORY_KEY, JSON.stringify([]));
+      }
+    }
+
+    // Comprobar si hay sesión activa en sessionStorage
+    function checkSession() {
+      const sessionData = sessionStorage.getItem(SESSION_USER_KEY);
+      if (sessionData) {
+        try {
+          currentUser = JSON.parse(sessionData);
+          showApp();
+        } catch (e) {
+          logout();
+        }
+      } else {
+        showLogin();
+      }
+    }
+
+    // MÓDULO DE AUTENTICACIÓN
+    function setupEventListeners() {
+      // Login Form
+      document.getElementById("login-form").addEventListener("submit", (e) => {
+        e.preventDefault();
+        const u = document.getElementById("input-user").value.trim();
+        const p = document.getElementById("input-pass").value.trim();
+
+        const userFound = USUARIOS.find(usr => usr.usuario === u && usr.password === p);
+
+        if (userFound) {
+          currentUser = { usuario: userFound.usuario, rol: userFound.rol };
+          sessionStorage.setItem(SESSION_USER_KEY, JSON.stringify(currentUser));
+          document.getElementById("login-alert").classList.add("hidden");
+          document.getElementById("login-form").reset();
+          showApp();
+        } else {
+          const alert = document.getElementById("login-alert");
+          alert.textContent = "Usuario o contraseña incorrectos.";
+          alert.classList.remove("hidden");
+        }
+      });
+
+      // Logout Button
+      document.getElementById("btn-logout").addEventListener("click", logout);
+
+      // Search Input Filter
+      document.getElementById("search-input").addEventListener("input", renderProducts);
+
+      // Sales History Filters (Delegado si es admin)
+      const filterUser = document.getElementById("filter-user");
+      const filterDate = document.getElementById("filter-date");
+      const btnClearFilters = document.getElementById("btn-clear-filters");
+      const btnEmptyHistory = document.getElementById("btn-empty-history");
+
+      if (filterUser) filterUser.addEventListener("change", renderHistory);
+      if (filterDate) filterDate.addEventListener("change", renderHistory);
+      if (btnClearFilters) {
+        btnClearFilters.addEventListener("click", () => {
+          filterUser.value = "";
+          filterDate.value = "";
+          renderHistory();
+        });
+      }
+      if (btnEmptyHistory) {
+        btnEmptyHistory.addEventListener("click", () => {
+          showConfirmModal("¿Estás seguro de que deseas vaciar todo el historial de ventas? Esta acción no se puede deshacer.", () => {
+            localStorage.setItem(STORAGE_HISTORY_KEY, JSON.stringify([]));
+            renderHistory();
+          });
+        });
+      }
+    }
+
+    function logout() {
+      sessionStorage.removeItem(SESSION_USER_KEY);
+      currentUser = null;
+      showLogin();
+    }
+
+    function showLogin() {
+      document.getElementById("login-screen").classList.remove("hidden");
+      document.getElementById("app-wrapper").classList.add("hidden");
+    }
+
+    function showApp() {
+      document.getElementById("login-screen").classList.add("hidden");
+      document.getElementById("app-wrapper").classList.remove("hidden");
+
+      // Cargar info del usuario en la barra superior
+      document.getElementById("display-user-name").textContent = currentUser.usuario;
+      const roleBadge = document.getElementById("display-user-role");
+      roleBadge.textContent = currentUser.rol;
+      roleBadge.className = `badge ${currentUser.rol === 'admin' ? 'badge-admin' : 'badge-vendedor'}`;
+
+      // Configurar vistas según ROL
+      setupRoleUI();
+    }
+
+    function setupRoleUI() {
+      const navContainer = document.getElementById("nav-tabs-container");
+      const adminFormWrapper = document.getElementById("admin-form-wrapper");
+      const inventoryLayout = document.getElementById("inventory-layout-container");
+
+      // Limpieza preventiva DOM
+      navContainer.innerHTML = "";
+      adminFormWrapper.innerHTML = "";
+
+      if (currentUser.rol === "admin") {
+        // ADMIN VISTA: Mostrar Pestañas completas
+        navContainer.innerHTML = `
+          <button class="nav-tab active" data-tab="tab-inventory">Inventario</button>
+          <button class="nav-tab" data-tab="tab-history">Historial de Ventas</button>
+          <button class="nav-tab" data-tab="tab-users">Usuarios</button>
+        `;
+
+        // Renderizar Formulario de Agregar/Editar sólo en DOM de Admin
+        inventoryLayout.classList.add("has-sidebar");
+        adminFormWrapper.innerHTML = `
+          <div class="card">
+            <div class="card-title" id="form-title">Agregar Producto</div>
+            <form id="product-form">
+              <div class="form-group">
+                <label for="prod-name">Nombre del Producto</label>
+                <input type="text" id="prod-name" class="form-control" required placeholder="Ej. Jarra de Vidrio">
+              </div>
+              <div class="form-group">
+                <label for="prod-price">Precio ($)</label>
+                <input type="number" step="0.01" min="0" id="prod-price" class="form-control" required placeholder="0.00">
+              </div>
+              <div class="form-group">
+                <label for="prod-file">Foto del Producto</label>
+                <input type="file" id="prod-file" class="form-control" accept="image/*">
+                <div class="img-preview-box" id="preview-box">
+                  <span style="color:var(--text-muted); font-size:0.85rem;" id="preview-placeholder">Vista previa de imagen</span>
+                  <img id="preview-img" class="hidden" alt="Vista previa">
+                </div>
+              </div>
+              <div style="display:flex; gap:10px; margin-top:15px;">
+                <button type="submit" class="btn btn-primary" style="flex:1;" id="btn-save-prod">Agregar</button>
+                <button type="button" class="btn btn-secondary hidden" id="btn-cancel-edit">Cancelar</button>
+              </div>
+            </form>
+          </div>
+        `;
+
+        // Listener del Formulario Admin
+        document.getElementById("product-form").addEventListener("submit", handleProductFormSubmit);
+        document.getElementById("prod-file").addEventListener("change", handleImageUpload);
+        document.getElementById("btn-cancel-edit").addEventListener("click", resetProductForm);
+
+        // Populate User Filter Dropdown in History
+        populateUserFilter();
+
+      } else {
+        // VENDEDOR VISTA: Solo pestañas de venta (Ocultamiento REAL)
+        navContainer.innerHTML = `
+          <button class="nav-tab active" data-tab="tab-inventory">Punto de Venta</button>
+        `;
+        inventoryLayout.classList.remove("has-sidebar");
+      }
+
+      // Conectar eventos a las pestañas
+      document.querySelectorAll(".nav-tab").forEach(tabBtn => {
+        tabBtn.addEventListener("click", (e) => {
+          document.querySelectorAll(".nav-tab").forEach(t => t.classList.remove("active"));
+          document.querySelectorAll(".tab-content").forEach(c => c.classList.add("hidden"));
+
+          e.target.classList.add("active");
+          const targetTab = e.target.getAttribute("data-tab");
+          document.getElementById(targetTab).classList.remove("hidden");
+
+          if (targetTab === "tab-history" && currentUser.rol === "admin") {
+            renderHistory();
+          } else if (targetTab === "tab-users" && currentUser.rol === "admin") {
+            renderUsers();
+          }
+        });
+      });
+
+      // Muestra por defecto la primera pestaña (Inventario)
+      switchTab("tab-inventory");
+      renderProducts();
+    }
+
+    function switchTab(tabId) {
+      document.querySelectorAll(".tab-content").forEach(c => c.classList.add("hidden"));
+      const target = document.getElementById(tabId);
+      if (target) target.classList.remove("hidden");
+    }
+
+    // MANEJO DE IMÁGENES CON HTML CANVAS (Max 400px ancho)
+    function handleImageUpload(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(event) {
+        const img = new Image();
+        img.onload = function() {
+          const canvas = document.createElement("canvas");
+          const MAX_WIDTH = 400;
+          let width = img.width;
+          let height = img.height;
+
+          if (width > MAX_WIDTH) {
+            height = Math.round((height * MAX_WIDTH) / width);
+            width = MAX_WIDTH;
+          }
+
+          canvas.width = width;
+          canvas.height = height;
+
+          const ctx = canvas.getContext("2d");
+          ctx.drawImage(img, 0, 0, width, height);
+
+          // Convertir a base64 optimizada en JPEG
+          currentBase64Image = canvas.toDataURL("image/jpeg", 0.85);
+
+          // Render Preview
+          const previewImg = document.getElementById("preview-img");
+          const previewPlaceholder = document.getElementById("preview-placeholder");
+          previewImg.src = currentBase64Image;
+          previewImg.classList.remove("hidden");
+          previewPlaceholder.classList.add("hidden");
+        };
+        img.src = event.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+
+    // GESTIÓN DE PRODUCTOS (Guardar/Editar)
+    function handleProductFormSubmit(e) {
+      e.preventDefault();
+      const name = document.getElementById("prod-name").value.trim();
+      const price = parseFloat(document.getElementById("prod-price").value);
+
+      if (!name || isNaN(price)) return;
+
+      let products = JSON.parse(localStorage.getItem(STORAGE_INVENTORY_KEY)) || [];
+
+      if (editingProductId) {
+        // Modo Edición
+        products = products.map(p => {
+          if (p.id === editingProductId) {
+            return {
+              ...p,
+              nombre: name,
+              precio: price,
+              imagen: currentBase64Image || p.imagen
+            };
+          }
+          return p;
+        });
+      } else {
+        // Modo Creación
+        const newProduct = {
+          id: "prod-" + Date.now(),
+          nombre: name,
+          precio: price,
+          imagen: currentBase64Image || "https://placehold.co/400x300/e2e8f0/64748b?text=Sin+Imagen"
+        };
+        products.push(newProduct);
+      }
+
+      localStorage.setItem(STORAGE_INVENTORY_KEY, JSON.stringify(products));
+      resetProductForm();
+      renderProducts();
+    }
+
+    function resetProductForm() {
+      editingProductId = null;
+      currentBase64Image = "";
+      const form = document.getElementById("product-form");
+      if (form) form.reset();
+      
+      const formTitle = document.getElementById("form-title");
+      if (formTitle) formTitle.textContent = "Agregar Producto";
+      
+      const btnSave = document.getElementById("btn-save-prod");
+      if (btnSave) btnSave.textContent = "Agregar";
+      
+      const btnCancel = document.getElementById("btn-cancel-edit");
+      if (btnCancel) btnCancel.classList.add("hidden");
+
+      const previewImg = document.getElementById("preview-img");
+      const previewPlaceholder = document.getElementById("preview-placeholder");
+      if (previewImg && previewPlaceholder) {
+        previewImg.src = "";
+        previewImg.classList.add("hidden");
+        previewPlaceholder.classList.remove("hidden");
+      }
+    }
+
+    function editProduct(id) {
+      const products = JSON.parse(localStorage.getItem(STORAGE_INVENTORY_KEY)) || [];
+      const prod = products.find(p => p.id === id);
+      if (!prod) return;
+
+      editingProductId = prod.id;
+      document.getElementById("prod-name").value = prod.nombre;
+      document.getElementById("prod-price").value = prod.precio;
+      
+      document.getElementById("form-title").textContent = "Editar Producto";
+      document.getElementById("btn-save-prod").textContent = "Guardar Cambios";
+      document.getElementById("btn-cancel-edit").classList.remove("hidden");
+
+      if (prod.imagen) {
+        currentBase64Image = prod.imagen;
+        const previewImg = document.getElementById("preview-img");
+        const previewPlaceholder = document.getElementById("preview-placeholder");
+        previewImg.src = prod.imagen;
+        previewImg.classList.remove("hidden");
+        previewPlaceholder.classList.add("hidden");
+      }
+    }
+
+    function deleteProduct(id) {
+      showConfirmModal("¿Estás seguro de que deseas eliminar este producto del inventario?", () => {
+        let products = JSON.parse(localStorage.getItem(STORAGE_INVENTORY_KEY)) || [];
+        products = products.filter(p => p.id !== id);
+        localStorage.setItem(STORAGE_INVENTORY_KEY, JSON.stringify(products));
+        renderProducts();
+      });
+    }
+
+    // MARCAR COMO VENDIDO
+    function sellProduct(id) {
+      let products = JSON.parse(localStorage.getItem(STORAGE_INVENTORY_KEY)) || [];
+      const prodIndex = products.findIndex(p => p.id === id);
+
+      if (prodIndex === -1) return;
+
+      const productToSell = products[prodIndex];
+
+      // 1. Quitar de Inventario
+      products.splice(prodIndex, 1);
+      localStorage.setItem(STORAGE_INVENTORY_KEY, JSON.stringify(products));
+
+      // 2. Registrar en Historial
+      const salesHistory = JSON.parse(localStorage.getItem(STORAGE_HISTORY_KEY)) || [];
+      const saleRecord = {
+        id: "sale-" + Date.now(),
+        productoNombre: productToSell.nombre,
+        precio: productToSell.precio,
+        imagen: productToSell.imagen,
+        vendedor: currentUser.usuario,
+        fechaHora: new Date().toISOString()
+      };
+      salesHistory.push(saleRecord);
+      localStorage.setItem(STORAGE_HISTORY_KEY, JSON.stringify(salesHistory));
+
+      // 3. Re-renderizar
+      renderProducts();
+    }
+
+    // RENDERIZAR LISTA DE PRODUCTOS
+    function renderProducts() {
+      const container = document.getElementById("products-grid");
+      const searchTerm = document.getElementById("search-input").value.toLowerCase().trim();
+      const products = JSON.parse(localStorage.getItem(STORAGE_INVENTORY_KEY)) || [];
+
+      const filteredProducts = products.filter(p => p.nombre.toLowerCase().includes(searchTerm));
+
+      if (filteredProducts.length === 0) {
+        container.innerHTML = `
+          <div class="empty-state">
+            <p>No se encontraron productos disponibles en el inventario.</p>
+          </div>
+        `;
+        return;
+      }
+
+      const isAdmin = currentUser.rol === "admin";
+
+      container.innerHTML = filteredProducts.map(p => `
+        <div class="product-card">
+          <div class="product-img-container">
+            <img src="${p.imagen}" alt="${escapeHtml(p.nombre)}" onerror="this.src='https://placehold.co/400x300/e2e8f0/64748b?text=Sin+Imagen'">
+          </div>
+          <div class="product-info">
+            <div class="product-name">${escapeHtml(p.nombre)}</div>
+            <div class="product-price">$${formatCurrency(p.precio)}</div>
+            <div class="product-actions">
+              <button class="btn btn-success" onclick="sellProduct('${p.id}')">
+                🏷️ VENDIDO
+              </button>
+              ${isAdmin ? `
+                <div class="product-actions-admin">
+                  <button class="btn btn-secondary" onclick="editProduct('${p.id}')">✏️ Editar</button>
+                  <button class="btn btn-danger" onclick="deleteProduct('${p.id}')">🗑️ Eliminar</button>
+                </div>
+              ` : ''}
+            </div>
+          </div>
+        </div>
+      `).join("");
+    }
+
+    // RENDERIZAR HISTORIAL DE VENTAS (Solo Admin)
+    function renderHistory() {
+      if (currentUser.rol !== "admin") return;
+
+      const history = JSON.parse(localStorage.getItem(STORAGE_HISTORY_KEY)) || [];
+      const userFilter = document.getElementById("filter-user").value;
+      const dateFilter = document.getElementById("filter-date").value;
+
+      let filtered = history;
+
+      if (userFilter) {
+        filtered = filtered.filter(item => item.vendedor === userFilter);
+      }
+
+      if (dateFilter) {
+        filtered = filtered.filter(item => {
+          const itemDate = new Date(item.fechaHora).toISOString().split('T')[0];
+          return itemDate === dateFilter;
+        });
+      }
+
+      // Ordenar por fecha más reciente
+      filtered.sort((a, b) => new Date(b.fechaHora) - new Date(a.fechaHora));
+
+      // Métricas
+      const totalIncome = filtered.reduce((acc, item) => acc + item.precio, 0);
+      document.getElementById("metric-total-income").textContent = `$${formatCurrency(totalIncome)}`;
+      document.getElementById("metric-total-items").textContent = filtered.length;
+
+      const tbody = document.getElementById("history-table-body");
+
+      if (filtered.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="5" style="text-align:center; color:var(--text-muted); padding: 30px;">
+              No hay registros de ventas que coincidan con los criterios.
+            </td>
+          </tr>
+        `;
+        return;
+      }
+
+      tbody.innerHTML = filtered.map(item => {
+        const dateObj = new Date(item.fechaHora);
+        const formattedDate = dateObj.toLocaleDateString('es-ES', {
+          year: 'numeric', month: 'short', day: 'numeric',
+          hour: '2-digit', minute: '2-digit'
+        });
+
+        return `
+          <tr>
+            <td>
+              <img src="${item.imagen}" class="table-thumb" alt="Thumb" onerror="this.src='https://placehold.co/100/e2e8f0/64748b?text=N/A'">
+            </td>
+            <td><strong>${escapeHtml(item.productoNombre)}</strong></td>
+            <td style="color:var(--success-dark); font-weight:700;">$${formatCurrency(item.precio)}</td>
+            <td>${formattedDate}</td>
+            <td><span class="badge badge-vendedor">${escapeHtml(item.vendedor)}</span></td>
+          </tr>
+        `;
+      }).join("");
+    }
+
+    // RENDERIZAR USUARIOS (Solo Admin)
+    function renderUsers() {
+      if (currentUser.rol !== "admin") return;
+
+      const container = document.getElementById("users-grid");
+      container.innerHTML = USUARIOS.map(u => `
+        <div class="user-card">
+          <div class="user-avatar">${u.usuario.charAt(0).toUpperCase()}</div>
+          <div>
+            <div style="font-weight:700; font-size:1rem;">${escapeHtml(u.usuario)}</div>
+            <span class="badge ${u.rol === 'admin' ? 'badge-admin' : 'badge-vendedor'}">${u.rol}</span>
+          </div>
+        </div>
+      `).join("");
+    }
+
+    function populateUserFilter() {
+      const select = document.getElementById("filter-user");
+      if (!select) return;
+      select.innerHTML = `<option value="">Todos los vendedores</option>`;
+      USUARIOS.forEach(u => {
+        const option = document.createElement("option");
+        option.value = u.usuario;
+        option.textContent = `${u.usuario} (${u.rol})`;
+        select.appendChild(option);
+      });
+    }
+
+    // HELPER UTILITIES
+    function formatCurrency(val) {
+      return Number(val).toLocaleString('en-US', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      });
+    }
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      return str.replace(/[&<>"']/g, function(m) {
+        return {
+          '&': '&amp;',
+          '<': '&lt;',
+          '>': '&gt;',
+          '"': '&quot;',
+          "'": '&#039;'
+        }[m];
+      });
+    }
+
+    // MODAL DE CONFIRMACIÓN PERSONALIZADO (Evita usar alert/confirm)
+    function showConfirmModal(message, onConfirm) {
+      const modal = document.getElementById("confirm-modal");
+      const msgElem = document.getElementById("modal-message");
+      const btnConfirm = document.getElementById("modal-btn-confirm");
+      const btnCancel = document.getElementById("modal-btn-cancel");
+
+      msgElem.textContent = message;
+      modal.classList.add("active");
+
+      const handleConfirm = () => {
+        onConfirm();
+        closeModal();
+      };
+
+      const closeModal = () => {
+        modal.classList.remove("active");
+        btnConfirm.removeEventListener("click", handleConfirm);
+        btnCancel.removeEventListener("click", closeModal);
+      };
+
+      btnConfirm.addEventListener("click", handleConfirm);
+      btnCancel.addEventListener("click", closeModal);
+    }
+  </script>
+</body>
+</html>
